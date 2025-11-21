@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>新闻聚合助手</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #0e1117;
+      --card: #161b22;
+      --accent: #7cc7ff;
+      --text: #e6edf3;
+      --muted: #8b949e;
+    }
+    body {
+      font-family: "Inter", "Noto Sans SC", system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      margin: 0;
+      padding: 0;
+      line-height: 1.6;
+      display: flex;
+      justify-content: center;
+    }
+    .container {
+      width: min(1100px, 95vw);
+      padding: 24px;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    h1 {
+      margin: 0;
+      font-size: 26px;
+    }
+    .badge {
+      padding: 6px 10px;
+      background: rgba(124, 199, 255, 0.15);
+      color: var(--accent);
+      border-radius: 999px;
+      font-size: 13px;
+    }
+    form {
+      background: var(--card);
+      border: 1px solid #30363d;
+      border-radius: 12px;
+      padding: 16px;
+      display: grid;
+      gap: 12px;
+    }
+    .fields {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: 1fr 120px 120px;
+    }
+    input, select, button {
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid #30363d;
+      background: #0d1117;
+      color: var(--text);
+      font-size: 15px;
+      outline: none;
+    }
+    input:focus, select:focus, button:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px rgba(124, 199, 255, 0.25);
+    }
+    button {
+      background: linear-gradient(120deg, #238636, #2ea043);
+      border: none;
+      color: white;
+      cursor: pointer;
+      font-weight: 600;
+      transition: transform 0.1s ease, box-shadow 0.1s ease;
+    }
+    button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+    }
+    .hint {
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .summary, .grid {
+      margin-top: 18px;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid #30363d;
+      border-radius: 12px;
+      padding: 14px 16px;
+      margin-bottom: 12px;
+      transition: border-color 0.15s ease;
+    }
+    .card:hover {
+      border-color: var(--accent);
+    }
+    .card h3 {
+      margin: 0 0 6px 0;
+      font-size: 18px;
+    }
+    .meta {
+      color: var(--muted);
+      font-size: 13px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .article-link {
+      color: var(--accent);
+      text-decoration: none;
+    }
+    .pill {
+      background: rgba(124, 199, 255, 0.1);
+      color: var(--accent);
+      border-radius: 999px;
+      padding: 4px 8px;
+      font-size: 12px;
+    }
+    .error {
+      margin-top: 12px;
+      padding: 12px;
+      background: #3d1a1a;
+      border: 1px solid #5c1f1f;
+      border-radius: 10px;
+      color: #f18f8f;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>新闻聚合助手</h1>
+      <span class="badge">Demo / Serper</span>
+    </header>
+
+    <form method="get" action="/">
+      <div class="fields">
+        <input type="text" name="q" placeholder="输入热点关键词，如：大模型 发布" value="{{ keyword }}" required />
+        <select name="source">
+          <option value="demo" {% if source == "demo" %}selected{% endif %}>离线示例</option>
+          <option value="serper" {% if source == "serper" %}selected{% endif %}>Serper.dev</option>
+        </select>
+        <select name="limit">
+          {% for n in [3,5,7,10] %}
+          <option value="{{ n }}" {% if limit == n %}selected{% endif %}>返回 {{ n }} 条</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+        <button type="submit">开始聚合</button>
+        <span class="hint">默认使用离线示例，切换 Serper 需提供 <code>SERPER_API_KEY</code> 环境变量。</span>
+      </div>
+    </form>
+
+    {% if error %}
+      <div class="error">{{ error }}</div>
+    {% endif %}
+
+    {% if result %}
+    <section class="summary">
+      <div class="card">
+        <div class="meta" style="margin-bottom:8px;">
+          <span class="pill">关键词: {{ result.keyword }}</span>
+          <span class="pill">来源: {{ "离线示例" if source == "demo" else "Serper.dev" }}</span>
+          <span class="pill">条数: {{ result.articles|length }}</span>
+        </div>
+        <h3>汇总摘要</h3>
+        <pre style="white-space: pre-wrap; font-family: inherit; margin: 8px 0 0 0;">{{ result.report }}</pre>
+      </div>
+    </section>
+
+    <section class="grid">
+      {% for article in result.articles %}
+      <div class="card">
+        <h3>{{ loop.index }}. {{ article.title }}</h3>
+        <div class="meta">
+          <span class="pill">{{ article.short_source() }}</span>
+          {% if article.published_at %}<span>{{ article.published_at.strftime("%Y-%m-%d") }}</span>{% endif %}
+          <a class="article-link" href="{{ article.url }}" target="_blank" rel="noreferrer">阅读原文 →</a>
+        </div>
+        {% if article.summary %}
+          <p>{{ article.summary }}</p>
+        {% elif article.content %}
+          <p>{{ article.content[:200] }}{% if article.content|length > 200 %}...{% endif %}</p>
+        {% else %}
+          <p class="hint">暂无正文，可能需要检查网络或站点限制。</p>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </section>
+    {% endif %}
+  </div>
+</body>
+</html>
