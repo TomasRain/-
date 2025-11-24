@@ -12,6 +12,7 @@
       --accent: #7cc7ff;
       --text: #e6edf3;
       --muted: #8b949e;
+      --success: #2ea043;
     }
     body {
       font-family: "Inter", "Noto Sans SC", system-ui, -apple-system, sans-serif;
@@ -32,11 +33,10 @@
       justify-content: space-between;
       align-items: center;
       margin-bottom: 20px;
+      gap: 10px;
+      flex-wrap: wrap;
     }
-    h1 {
-      margin: 0;
-      font-size: 26px;
-    }
+    h1 { margin: 0; font-size: 26px; }
     .badge {
       padding: 6px 10px;
       background: rgba(124, 199, 255, 0.15);
@@ -55,7 +55,7 @@
     .fields {
       display: grid;
       gap: 12px;
-      grid-template-columns: 1fr 120px 120px;
+      grid-template-columns: 1fr 140px 140px;
     }
     input, select, button {
       padding: 10px 12px;
@@ -66,10 +66,7 @@
       font-size: 15px;
       outline: none;
     }
-    input:focus, select:focus, button:focus {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 2px rgba(124, 199, 255, 0.25);
-    }
+    input:focus, select:focus, button:focus { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(124,199,255,0.25); }
     button {
       background: linear-gradient(120deg, #238636, #2ea043);
       border: none;
@@ -78,17 +75,9 @@
       font-weight: 600;
       transition: transform 0.1s ease, box-shadow 0.1s ease;
     }
-    button:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
-    }
-    .hint {
-      color: var(--muted);
-      font-size: 13px;
-    }
-    .summary, .grid {
-      margin-top: 18px;
-    }
+    button:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25); }
+    .hint { color: var(--muted); font-size: 13px; }
+    .summary, .grid { margin-top: 18px; }
     .card {
       background: var(--card);
       border: 1px solid #30363d;
@@ -97,13 +86,8 @@
       margin-bottom: 12px;
       transition: border-color 0.15s ease;
     }
-    .card:hover {
-      border-color: var(--accent);
-    }
-    .card h3 {
-      margin: 0 0 6px 0;
-      font-size: 18px;
-    }
+    .card:hover { border-color: var(--accent); }
+    .card h3 { margin: 0 0 6px 0; font-size: 18px; }
     .meta {
       color: var(--muted);
       font-size: 13px;
@@ -112,17 +96,9 @@
       align-items: center;
       flex-wrap: wrap;
     }
-    .article-link {
-      color: var(--accent);
-      text-decoration: none;
-    }
-    .pill {
-      background: rgba(124, 199, 255, 0.1);
-      color: var(--accent);
-      border-radius: 999px;
-      padding: 4px 8px;
-      font-size: 12px;
-    }
+    .article-link { color: var(--accent); text-decoration: none; }
+    .pill { background: rgba(124, 199, 255, 0.1); color: var(--accent); border-radius: 999px; padding: 4px 8px; font-size: 12px; }
+    .pill.success { background: rgba(46, 160, 67, 0.15); color: var(--success); }
     .error {
       margin-top: 12px;
       padding: 12px;
@@ -131,13 +107,15 @@
       border-radius: 10px;
       color: #f18f8f;
     }
+    .stats { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+    pre { white-space: pre-wrap; font-family: inherit; margin: 8px 0 0 0; }
   </style>
 </head>
 <body>
   <div class="container">
     <header>
       <h1>新闻聚合助手</h1>
-      <span class="badge">Demo / Serper</span>
+      <span class="badge">支持 Demo / Serper、缓存与加速</span>
     </header>
 
     <form method="get" action="/">
@@ -155,7 +133,7 @@
       </div>
       <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
         <button type="submit">开始聚合</button>
-        <span class="hint">默认使用离线示例，切换 Serper 需提供 <code>SERPER_API_KEY</code> 环境变量。</span>
+        <span class="hint">默认使用离线示例，切换 Serper 需提供 <code>SERPER_API_KEY</code> 环境变量；重复查询会自动命中缓存。</span>
       </div>
     </form>
 
@@ -170,9 +148,17 @@
           <span class="pill">关键词: {{ result.keyword }}</span>
           <span class="pill">来源: {{ "离线示例" if source == "demo" else "Serper.dev" }}</span>
           <span class="pill">条数: {{ result.articles|length }}</span>
+          <span class="pill {% if cached %}success{% endif %}">{% if cached %}命中缓存{% else %}实时拉取{% endif %}</span>
+          <span class="pill">耗时 ~{{ result.stats.duration_ms }} ms</span>
+        </div>
+        <div class="stats">
+          <span class="pill">原始 {{ result.stats.requested }} 条</span>
+          <span class="pill">去重 {{ result.stats.deduplicated }} 条</span>
+          <span class="pill">抓取正文 {{ result.stats.hydrated }} 条</span>
+          <span class="pill">生成摘要 {{ result.stats.summarized }} 条</span>
         </div>
         <h3>汇总摘要</h3>
-        <pre style="white-space: pre-wrap; font-family: inherit; margin: 8px 0 0 0;">{{ result.report }}</pre>
+        <pre>{{ result.report }}</pre>
       </div>
     </section>
 

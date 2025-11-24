@@ -18,3 +18,14 @@ class Article:
 
     def short_source(self) -> str:
         return self.source or "unknown"
+
+
+@dataclass
+class PipelineStats:
+    """记录运行过程的指标，便于在 UI/API 中展示。"""
+
+    requested: int
+    deduplicated: int
+    hydrated: int
+    summarized: int
+    duration_ms: float

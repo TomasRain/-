@@ -55,6 +55,12 @@ def main(argv: Optional[list[str]] = None) -> None:
     print(f"\n# 关键词：{result.keyword}")
     print("## 汇总摘要")
     print(result.report)
+    print("\n## 指标")
+    print(
+        f"请求 {result.stats.requested} 条，去重后 {result.stats.deduplicated} 条，"
+        f"抓取正文 {result.stats.hydrated} 条，生成摘要 {result.stats.summarized} 条，"
+        f"耗时约 {result.stats.duration_ms} ms"
+    )
     print("\n## 详情")
     for idx, article in enumerate(result.articles, start=1):
         print(f"{idx}. {article.title} — {article.short_source()}")
