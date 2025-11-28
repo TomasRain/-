@@ -7,7 +7,9 @@
 __all__ = [
     "Article",
     "NewsPipeline",
+    "NewsResult",
+    "PipelineStats",
 ]
 
-from .models import Article
-from .pipeline import NewsPipeline
+from .models import Article, PipelineStats
+from .pipeline import NewsPipeline, NewsResult
